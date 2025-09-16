@@ -27,9 +27,9 @@ class _BookingScreenState extends State<BookingScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFE91E63),
-                      Color(0xFFAD1457),
-                      Color(0xFF880E4F),
+                      Color(0xFF93A3EE),
+                      Color(0xFF7C3AED),
+                      Color(0xFF6366F1),
                     ],
                     stops: [0.0, 0.6, 1.0],
                   ),
@@ -149,7 +149,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                         ),
                                         child: const Icon(
                                           Icons.person_outline,
-                                          color: Color(0xFFE91E63),
+                                          color: Color(0xFF64748B),
                                           size: 28,
                                         ),
                                       );
@@ -205,7 +205,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                   filterTabs[index],
                                   style: TextStyle(
                                     color: selectedFilterIndex == index
-                                        ? const Color(0xFFE91E63)
+                                        ? const Color(0xFF64748B)
                                         : Colors.white,
                                     fontWeight: selectedFilterIndex == index
                                         ? FontWeight.w700
@@ -284,7 +284,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE91E63).withOpacity(0.1),
+                              color: const Color(0xFF7C3AED).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Text(
@@ -292,7 +292,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFFE91E63),
+                                color: Color(0xFF7C3AED),
                               ),
                             ),
                           ),
@@ -306,7 +306,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         "₹1,499",
                         "Beauty Salon - Downtown",
                         'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=300&h=300&fit=crop',
-                        const Color(0xFFE91E63),
+                        const Color(0xFF7C3AED),
                         "confirmed",
                       ),
                       _buildModernAppointmentCard(
@@ -315,7 +315,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         "₹899",
                         "Hair Studio - City Center",
                         'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&h=300&fit=crop',
-                        const Color(0xFF9C27B0),
+                        const Color(0xFF93A3EE),
                         "confirmed",
                       ),
                     ],
@@ -455,7 +455,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                              colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -490,7 +490,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             "Glow Facial",
                             "Starting ₹499",
                             "45 min",
-                            const Color(0xFFE91E63),
+                            Color(0xFF7C3AED),
                             'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=300&h=300&fit=crop',
                             4.8,
                           ),
@@ -501,7 +501,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             "Hair Styling",
                             "Starting ₹599",
                             "60 min",
-                            const Color(0xFF9C27B0),
+                            Color(0xFF7C3AED),
                             'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&h=300&fit=crop',
                             4.9,
                           ),
@@ -547,12 +547,12 @@ class _BookingScreenState extends State<BookingScreen> {
       floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+            colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
           ),
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE91E63).withOpacity(0.3),
+              color: const Color(0xFF7C3AED).withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -597,10 +597,10 @@ class _BookingScreenState extends State<BookingScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE91E63).withOpacity(0.1),
+              color: const Color(0xFF6366F1).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFFE91E63), size: 20),
+            child: Icon(icon, color: const Color(0xFF6366F1), size: 20),
           ),
           const SizedBox(height: 8),
           Text(
@@ -684,7 +684,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           ),
                           borderRadius: BorderRadius.circular(18),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.image_outlined,
                           color: Colors.white,
                           size: 28,
@@ -918,7 +918,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFE91E63),
+                        color: Color(0xFF6366F1),
                       ),
                     ),
                     Row(
@@ -964,7 +964,7 @@ class _BookingScreenState extends State<BookingScreen> {
                             ),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                                colors: [Color(0xFF6366F1), Color(0xFFAD1457)],
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),

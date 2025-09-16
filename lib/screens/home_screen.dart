@@ -1,52 +1,203 @@
 import 'package:flutter/material.dart';
 import './service_details_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class HomeScreen extends StatelessWidget {
+class Category {
+  final String id;
+  final String name;
+  final String imageUrl;
+  final bool isActive;
+
+  Category({
+    required this.id,
+    required this.name,
+    required this.imageUrl,
+    required this.isActive,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      isActive: json['isActive'] ?? false,
+    );
+  }
+}
+
+class Service {
+  final String id;
+  final String name;
+  final String description;
+  final int price;
+  final int duration;
+  final Category category;
+  final String imageUrl;
+  final bool isPopular;
+  final bool isActive;
+  final List<String> isIncluded;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  Service({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.duration,
+    required this.category,
+    required this.imageUrl,
+    required this.isPopular,
+    required this.isActive,
+    required this.isIncluded,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory Service.fromJson(Map<String, dynamic> json) {
+    return Service(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      price: json['price'] ?? 0,
+      duration: json['duration'] ?? 0,
+      category: Category.fromJson(json['category'] ?? {}),
+      imageUrl: json['imageUrl'] ?? '',
+      isPopular: json['isPopular'] ?? false,
+      isActive: json['isActive'] ?? false,
+      isIncluded: List<String>.from(json['isIncluded'] ?? []),
+      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
+      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toString()),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Category> categories = [];
+  List<Service> services = [];
+  List<Service> popularServices = [];
+  bool isLoading = true;
+  String errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    try {
+      // Fetch categories
+      final categoriesResponse = await http.get(
+        Uri.parse('https://ps-back-8dr9.onrender.com/api/categories/'),
+      );
+
+      if (categoriesResponse.statusCode == 200) {
+        final Map<String, dynamic> categoriesData = json.decode(
+          categoriesResponse.body,
+        );
+        if (categoriesData['success'] == true) {
+          final List<dynamic> categoriesJson = categoriesData['data'] ?? [];
+          setState(() {
+            categories = categoriesJson
+                .map((json) => Category.fromJson(json))
+                .toList();
+          });
+        }
+      }
+
+      // Fetch services
+      final servicesResponse = await http.get(
+        Uri.parse('https://ps-back-8dr9.onrender.com/api/services'),
+      );
+
+      if (servicesResponse.statusCode == 200) {
+        final Map<String, dynamic> servicesData = json.decode(
+          servicesResponse.body,
+        );
+        if (servicesData['success'] == true) {
+          final List<dynamic> servicesJson = servicesData['data'] ?? [];
+          setState(() {
+            services = servicesJson
+                .map((json) => Service.fromJson(json))
+                .toList();
+
+            // Filter popular services
+            popularServices = services
+                .where((service) => service.isPopular)
+                .toList();
+          });
+        } else {
+          setState(() {
+            errorMessage = 'Failed to load services: API returned unsuccessful';
+          });
+        }
+      } else {
+        setState(() {
+          errorMessage =
+              'Failed to load services: ${servicesResponse.statusCode}';
+        });
+      }
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error fetching data: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Modern Header Section
+              // Professional Header Section
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFE91E63),
-                      Color(0xFFAD1457),
-                      Color(0xFF880E4F),
+                      Color(0xFF93A3EE),
+                      Color(0xFF7C3AED),
+                      Color(0xFF6366F1),
                     ],
                     stops: [0.0, 0.6, 1.0],
                   ),
                   borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(35),
-                    bottomRight: Radius.circular(35),
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
                 ),
                 child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(35),
-                      bottomRight: Radius.circular(35),
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
                     ),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.1),
-                      ],
+                      colors: [Colors.transparent, Color(0x0A000000)],
                     ),
                   ),
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -58,38 +209,20 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      "Hi Shreya! ",
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white,
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        "✨",
-                                        style: TextStyle(fontSize: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
                                 const Text(
-                                  "Ready to glow today?",
+                                  "Hello Shreya",
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "Discover your perfect beauty experience",
+                                  style: TextStyle(
+                                    fontSize: 16,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w400,
                                   ),
@@ -98,52 +231,39 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            width: 60,
-                            height: 60,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white.withOpacity(0.3),
-                                  Colors.white.withOpacity(0.1),
-                                ],
-                              ),
+                              color: const Color(0x26FFFFFF),
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                              border: Border.all(
+                                color: const Color(0x33FFFFFF),
+                                width: 1.5,
+                              ),
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(28),
                               child: Container(
-                                margin: const EdgeInsets.all(3),
+                                margin: const EdgeInsets.all(2),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(27),
+                                  borderRadius: BorderRadius.circular(26),
                                   child: Image.network(
                                     'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face',
-                                    width: 54,
-                                    height: 54,
+                                    width: 52,
+                                    height: 52,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
                                         decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.white.withOpacity(0.8),
-                                              Colors.white.withOpacity(0.6),
-                                            ],
-                                          ),
+                                          color: const Color(0x33FFFFFF),
                                           borderRadius: BorderRadius.circular(
-                                            27,
+                                            26,
                                           ),
                                         ),
                                         child: const Icon(
                                           Icons.person_outline,
-                                          color: Color(0xFFE91E63),
-                                          size: 28,
+                                          color: Colors.white,
+                                          size: 24,
                                         ),
                                       );
                                     },
@@ -154,35 +274,37 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 25),
-                      // Modern Search bar
+                      const SizedBox(height: 28),
+                      // Professional Search bar
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 5),
+                              color: const Color(0x14000000),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: TextField(
                           decoration: InputDecoration(
-                            hintText: "Search for beauty services...",
-                            hintStyle: TextStyle(
-                              color: Colors.grey[400],
-                              fontSize: 16,
+                            hintText: "Search beauty services...",
+                            hintStyle: const TextStyle(
+                              color: Color(0xFF64748B),
+                              fontSize: 15,
                               fontWeight: FontWeight.w400,
                             ),
                             prefixIcon: Container(
-                              margin: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.all(10),
+                              width: 36,
+                              height: 36,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
-                                    Color(0xFFE91E63),
-                                    Color(0xFFAD1457),
+                                    Color(0xFF93A3EE),
+                                    Color(0xFF7C3AED),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(10),
@@ -190,30 +312,33 @@ class HomeScreen extends StatelessWidget {
                               child: const Icon(
                                 Icons.search_rounded,
                                 color: Colors.white,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
                             suffixIcon: Container(
                               margin: const EdgeInsets.all(8),
+                              width: 40,
+                              height: 40,
                               decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Icons.tune_rounded,
-                                color: Colors.grey[600],
-                                size: 20,
+                                color: Color(0xFF64748B),
+                                size: 18,
                               ),
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 20,
-                              vertical: 18,
+                              vertical: 16,
                             ),
                           ),
                           style: const TextStyle(
-                            color: Color(0xFF1A1B23),
-                            fontSize: 16,
+                            color: Color(0xFF1E293B),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
@@ -222,9 +347,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 28),
 
-              // Modern Categories Section with Images
+              // Categories Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -236,186 +361,90 @@ class HomeScreen extends StatelessWidget {
                         const Text(
                           "Categories",
                           style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1B23),
-                            letterSpacing: -0.5,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.3,
                           ),
                         ),
                         TextButton(
                           onPressed: () {},
-                          child: Text(
+                          child: const Text(
                             "View All",
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
+                              color: Color(0xFF64748B),
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 120,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          _buildModernCategoryItem(
-                            "Facial",
-                            'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200&h=200&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
-                            ),
-                          ),
-                          _buildModernCategoryItem(
-                            "Hair",
-                            'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
-                            ),
-                          ),
-                          _buildModernCategoryItem(
-                            "Nails",
-                            'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200&h=200&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
-                            ),
-                          ),
-                          _buildModernCategoryItem(
-                            "Makeup",
-                            'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=200&h=200&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
-                            ),
-                          ),
-                          _buildModernCategoryItem(
-                            "Spa",
-                            'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200&h=200&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 35),
-
-              // Trending Services Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            "🔥 TRENDING",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          "Popular Services",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1A1B23),
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Modern service cards grid
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildModernServiceCard(
-                            context,
-                            "Glow Facial",
-                            "₹499",
-                            "45 min",
-                            'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=400&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
-                            ),
-                            4.8,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildModernServiceCard(
-                            context,
-                            "Eyebrow Threading",
-                            "₹150",
-                            "20 min",
-                            'https://images.unsplash.com/photo-1583001931096-959e1a1a6223?w=400&h=400&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
-                            ),
-                            4.9,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildModernServiceCard(
-                            context,
-                            "Full Body Wax",
-                            "₹1299",
-                            "90 min",
-                            'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&h=400&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
-                            ),
-                            4.7,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildModernServiceCard(
-                            context,
-                            "Bridal Makeup",
-                            "₹2999",
-                            "120 min",
-                            'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=400&fit=crop',
-                            const LinearGradient(
-                              colors: [Color(0xFFFF9800), Color(0xFFF57C00)],
-                            ),
-                            5.0,
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      height: 110,
+                      child: isLoading
+                          ? _buildCategoryLoading()
+                          : errorMessage.isNotEmpty
+                          ? _buildCategoryError(errorMessage)
+                          : _buildCategoryList(),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 35),
+              const SizedBox(height: 32),
+
+              // Popular Services Section (only show if there are popular services)
+              if (popularServices.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "FEATURED",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            "Popular Services",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E293B),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      // Service cards grid
+                      _buildPopularServicesGrid(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
 
               // All Services Section
               Padding(
@@ -426,63 +455,19 @@ class HomeScreen extends StatelessWidget {
                     const Text(
                       "All Services",
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A1B23),
-                        letterSpacing: -0.5,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                        letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Modern service list items
-                    _buildModernServiceListItem(
-                      context,
-                      "Eyebrow & Lashes",
-                      "₹200 - ₹800",
-                      "Perfect your look",
-                      'https://images.unsplash.com/photo-1583001931096-959e1a1a6223?w=300&h=300&fit=crop',
-                      const LinearGradient(
-                        colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
-                      ),
-                      4.8,
-                    ),
-                    _buildModernServiceListItem(
-                      context,
-                      "Hair Care",
-                      "₹500 - ₹2500",
-                      "Transform your style",
-                      'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&h=300&fit=crop',
-                      const LinearGradient(
-                        colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
-                      ),
-                      4.9,
-                    ),
-                    _buildModernServiceListItem(
-                      context,
-                      "Nail Care",
-                      "₹300 - ₹1200",
-                      "Beautiful hands & feet",
-                      'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=300&h=300&fit=crop',
-                      const LinearGradient(
-                        colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
-                      ),
-                      4.7,
-                    ),
-                    _buildModernServiceListItem(
-                      context,
-                      "Body Treatments",
-                      "₹800 - ₹3500",
-                      "Relax & rejuvenate",
-                      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300&h=300&fit=crop',
-                      const LinearGradient(
-                        colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
-                      ),
-                      4.6,
-                    ),
+                    _buildAllServicesList(),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -490,82 +475,120 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildModernCategoryItem(
-    String title,
-    String imageUrl,
-    Gradient gradient,
-  ) {
+  Widget _buildCategoryList() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return _buildCategoryItem(
+          category.name,
+          category.imageUrl,
+          const LinearGradient(colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)]),
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryLoading() {
+    return ListView.builder(
+      scrollDirection: Axis.horizontal,
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return Container(
+          width: 88,
+          margin: const EdgeInsets.only(right: 14),
+          child: Column(
+            children: [
+              Container(
+                width: 88,
+                height: 78,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF7C3AED),
+                    ),
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(width: 60, height: 12, color: const Color(0xFFE2E8F0)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryError(String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Text('Error: $error', style: const TextStyle(color: Colors.red)),
+      ),
+    );
+  }
+
+  Widget _buildCategoryItem(String title, String imageUrl, Gradient gradient) {
     return Container(
-      width: 95,
-      margin: const EdgeInsets.only(right: 16),
+      width: 88,
+      margin: const EdgeInsets.only(right: 14),
       child: Column(
         children: [
           Container(
-            width: 95,
-            height: 85,
+            width: 88,
+            height: 78,
             decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: const Color(0x267C3AED),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Container(
-              margin: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(21),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  Image.network(
+                    imageUrl,
+                    width: 88,
+                    height: 78,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 88,
+                        height: 78,
+                        decoration: BoxDecoration(
+                          gradient: gradient,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.image_outlined,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      );
+                    },
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, const Color(0x4D000000)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                 ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(21),
-                child: Stack(
-                  children: [
-                    Image.network(
-                      imageUrl,
-                      width: 89,
-                      height: 79,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 89,
-                          height: 79,
-                          decoration: BoxDecoration(
-                            gradient: gradient,
-                            borderRadius: BorderRadius.circular(21),
-                          ),
-                          child: const Icon(
-                            Icons.image_outlined,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                        );
-                      },
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.3),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(21),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
@@ -574,66 +597,87 @@ class HomeScreen extends StatelessWidget {
             title,
             style: const TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1B23),
-              letterSpacing: -0.2,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E293B),
+              letterSpacing: -0.1,
             ),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildModernServiceCard(
-    BuildContext context,
-    String title,
-    String price,
-    String duration,
-    String imageUrl,
-    Gradient gradient,
-    double rating,
-  ) {
+  Widget _buildPopularServicesGrid() {
+    if (popularServices.isEmpty) {
+      return Container();
+    }
+
+    return Column(
+      children: [
+        for (int i = 0; i < popularServices.length; i += 2)
+          Column(
+            children: [
+              Row(
+                children: [
+                  if (i < popularServices.length)
+                    Expanded(child: _buildServiceCard(popularServices[i])),
+                  if (i + 1 < popularServices.length) ...[
+                    const SizedBox(width: 14),
+                    Expanded(child: _buildServiceCard(popularServices[i + 1])),
+                  ],
+                ],
+              ),
+              if (i + 2 < popularServices.length) const SizedBox(height: 14),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildServiceCard(Service service) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ServiceDetailsScreen(
-              serviceName: title,
-              serviceImage: imageUrl,
-              serviceColor: const Color(0xFFE91E63),
+              serviceId: service.id, // Changed to pass service ID
             ),
           ),
         );
       },
       child: Container(
-        height: 200,
+        height: 190,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: const Color(0x14000000),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
               // Background Image
               Positioned.fill(
                 child: Image.network(
-                  imageUrl,
+                  service.imageUrl,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
-                      decoration: BoxDecoration(gradient: gradient),
-                      width: double.infinity,
-                      height: double.infinity,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -645,10 +689,7 @@ class HomeScreen extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
+                      colors: [Colors.transparent, const Color(0x99000000)],
                     ),
                   ),
                 ),
@@ -664,47 +705,43 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xE6FFFFFF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star_rounded,
+                              color: Color(0xFFFB923C),
+                              size: 14,
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(12),
+                            const SizedBox(width: 2),
+                            const Text(
+                              "4.8",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  color: Color(0xFFffa502),
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  rating.toString(),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1A1B23),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        title,
+                        service.name,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
-                          letterSpacing: -0.3,
+                          letterSpacing: -0.2,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -712,9 +749,9 @@ class HomeScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            price,
+                            "₹${service.price}",
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 17,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -725,11 +762,15 @@ class HomeScreen extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: const Color(0x33FFFFFF),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0x4DFFFFFF),
+                                width: 1,
+                              ),
                             ),
                             child: Text(
-                              duration,
+                              "${service.duration} min",
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -750,24 +791,39 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildModernServiceListItem(
-    BuildContext context,
-    String title,
-    String price,
-    String description,
-    String imageUrl,
-    Gradient gradient,
-    double rating,
-  ) {
+  Widget _buildAllServicesList() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage.isNotEmpty) {
+      return Center(
+        child: Text(
+          'Error: $errorMessage',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    if (services.isEmpty) {
+      return const Center(child: Text('No services available'));
+    }
+
+    return Column(
+      children: services
+          .map((service) => _buildServiceListItem(service))
+          .toList(),
+    );
+  }
+
+  Widget _buildServiceListItem(Service service) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ServiceDetailsScreen(
-              serviceName: title,
-              serviceImage: imageUrl,
-              serviceColor: const Color(0xFF667eea),
+              serviceId: service.id, // Changed to pass service ID
             ),
           ),
         );
@@ -777,10 +833,10 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: const Color(0x0F000000),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -790,57 +846,42 @@ class HomeScreen extends StatelessWidget {
           children: [
             // Service Image
             Container(
-              width: 70,
-              height: 70,
+              width: 68,
+              height: 68,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
+                    color: const Color(0x267C3AED),
+                    blurRadius: 15,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Stack(
-                  children: [
-                    Image.network(
-                      imageUrl,
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            gradient: gradient,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Icon(
-                            Icons.image_outlined,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        );
-                      },
-                    ),
-                    Container(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  service.imageUrl,
+                  width: 68,
+                  height: 68,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 68,
+                      height: 68,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.2),
-                          ],
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
                         ),
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    ),
-                  ],
+                      child: const Icon(
+                        Icons.image_outlined,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -854,12 +895,12 @@ class HomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        title,
+                        service.name,
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1A1B23),
-                          letterSpacing: -0.3,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1E293B),
+                          letterSpacing: -0.2,
                         ),
                       ),
                       Container(
@@ -868,24 +909,24 @@ class HomeScreen extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFffa502).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          color: const Color(0xFFFED7AA),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.star_rounded,
-                              color: Color(0xFFffa502),
-                              size: 14,
+                              color: Color(0xFFFB923C),
+                              size: 12,
                             ),
                             const SizedBox(width: 2),
-                            Text(
-                              rating.toString(),
-                              style: const TextStyle(
-                                fontSize: 12,
+                            const Text(
+                              "4.8",
+                              style: TextStyle(
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF1A1B23),
+                                color: Color(0xFF1E293B),
                               ),
                             ),
                           ],
@@ -895,23 +936,25 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                    service.description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w400,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        price,
+                        "₹${service.price}",
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFE91E63),
+                          color: Color(0xFF7C3AED),
                         ),
                       ),
                       Container(
@@ -921,9 +964,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                            colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -932,14 +975,14 @@ class HomeScreen extends StatelessWidget {
                               "Book Now",
                               style: TextStyle(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
                             SizedBox(width: 4),
                             Icon(
                               Icons.arrow_forward_rounded,
-                              size: 14,
+                              size: 12,
                               color: Colors.white,
                             ),
                           ],

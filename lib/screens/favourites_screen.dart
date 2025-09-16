@@ -20,9 +20,9 @@ class FavoritesScreen extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFE91E63),
-                      Color(0xFFAD1457),
-                      Color(0xFF880E4F),
+                      Color(0xFF93A3EE),
+                      Color(0xFF7C3AED),
+                      Color(0xFF6366F1),
                     ],
                     stops: [0.0, 0.6, 1.0],
                   ),
@@ -151,8 +151,8 @@ class FavoritesScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
-                                    Color(0xFFE91E63),
-                                    Color(0xFFAD1457),
+                                    Color(0xFF6366F1),
+                                    Color.fromARGB(255, 57, 60, 242),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(10),
@@ -223,7 +223,7 @@ class FavoritesScreen extends StatelessWidget {
                             "Discover new favorites",
                             Icons.explore_rounded,
                             const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             () {},
                           ),
@@ -235,7 +235,7 @@ class FavoritesScreen extends StatelessWidget {
                             "Repeat past bookings",
                             Icons.refresh_rounded,
                             const LinearGradient(
-                              colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             () {},
                           ),
@@ -263,7 +263,7 @@ class FavoritesScreen extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -303,7 +303,7 @@ class FavoritesScreen extends StatelessWidget {
                             "45 min",
                             'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=400&fit=crop',
                             const LinearGradient(
-                              colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             4.8,
                           ),
@@ -315,7 +315,7 @@ class FavoritesScreen extends StatelessWidget {
                             "20 min",
                             'https://images.unsplash.com/photo-1583001931096-959e1a1a6223?w=400&h=400&fit=crop',
                             const LinearGradient(
-                              colors: [Color(0xFF9C27B0), Color(0xFF673AB7)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             4.9,
                           ),
@@ -327,7 +327,7 @@ class FavoritesScreen extends StatelessWidget {
                             "90 min",
                             'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=400&h=400&fit=crop',
                             const LinearGradient(
-                              colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+                              colors: [Color(0xFF7C3AED), Color(0xFF6366F1)],
                             ),
                             4.7,
                           ),
@@ -386,14 +386,14 @@ class FavoritesScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFFE91E63).withOpacity(0.1),
-                    const Color(0xFFAD1457).withOpacity(0.05),
+                    const Color(0xFF7C3AED).withOpacity(0.1),
+                    const Color(0xFF6366F1).withOpacity(0.05),
                   ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE91E63).withOpacity(0.1),
+                    color: const Color(0xFF6366F1).withOpacity(0.1),
                     blurRadius: 30,
                     offset: const Offset(0, 10),
                   ),
@@ -407,7 +407,7 @@ class FavoritesScreen extends StatelessWidget {
                     height: 100,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                        colors: [Color(0xFF6366F1), Color(0xFF7C3AED)],
                       ),
                       shape: BoxShape.circle,
                     ),
@@ -436,7 +436,7 @@ class FavoritesScreen extends StatelessWidget {
                       ),
                       child: const Icon(
                         Icons.add_rounded,
-                        color: Color(0xFFE91E63),
+                        color: Color(0xFF7C3AED),
                         size: 16,
                       ),
                     ),
@@ -472,12 +472,12 @@ class FavoritesScreen extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFE91E63), Color(0xFFAD1457)],
+                  colors: [Color(0xFF93A3EE), Color(0xFF7C3AED)],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE91E63).withOpacity(0.3),
+                    color: const Color(0xFF7C3AED).withOpacity(0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -595,13 +595,13 @@ class FavoritesScreen extends StatelessWidget {
   ) {
     return GestureDetector(
       onTap: () {
+        // For demo purposes, we'll use a placeholder service ID
+        // In a real app, you would have actual service IDs
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ServiceDetailsScreen(
-              serviceName: title,
-              serviceImage: imageUrl,
-              serviceColor: const Color(0xFFE91E63),
+              serviceId: "demo_service_id", // Use actual service ID here
             ),
           ),
         );
@@ -671,7 +671,7 @@ class FavoritesScreen extends StatelessWidget {
                   ),
                   child: const Icon(
                     Icons.favorite_border_rounded,
-                    color: Color(0xFFE91E63),
+                    color: Color(0xFF7C3AED),
                     size: 18,
                   ),
                 ),

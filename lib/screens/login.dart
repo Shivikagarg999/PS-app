@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:math' as math;
 import './main_screen.dart';
 
@@ -12,10 +14,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _phoneFocusNode = FocusNode();
-  final FocusNode _otpFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   // Animation controllers - initialized as nullable
   AnimationController? _mainController;
@@ -32,9 +36,8 @@ class _LoginScreenState extends State<LoginScreen>
   Animation<double>? _floatingAnimation;
 
   bool _isLoading = false;
-  bool _showOtpField = false;
-  bool _isOtpVerifying = false;
-  String _phoneNumber = '';
+  bool _isRegistering = false;
+  bool _isLoginMode = true;
   bool _isDisposed = false;
 
   @override
@@ -144,16 +147,89 @@ class _LoginScreenState extends State<LoginScreen>
     _floatingController?.dispose();
     _formController?.dispose();
     _buttonController?.dispose();
+    _nameController.dispose();
     _phoneController.dispose();
-    _otpController.dispose();
+    _passwordController.dispose();
+    _nameFocusNode.dispose();
     _phoneFocusNode.dispose();
-    _otpFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _sendOtp() async {
+  Future<void> _registerUser() async {
+    if (_nameController.text.isEmpty) {
+      _showSnackBar('Please enter your name');
+      return;
+    }
+
     if (_phoneController.text.length != 10) {
       _showSnackBar('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    if (_passwordController.text.length < 6) {
+      _showSnackBar('Password must be at least 6 characters long');
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _isRegistering = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://ps-back-8dr9.onrender.com/api/user/register'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'name': _nameController.text,
+          'phone': _phoneController.text,
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Registration successful
+        _showSnackBar(
+          'Registration successful! Please login.',
+          isSuccess: true,
+        );
+
+        // Switch to login mode
+        setState(() {
+          _isLoginMode = true;
+        });
+      } else {
+        // Registration failed
+        final errorData = jsonDecode(response.body);
+        _showSnackBar(errorData['message'] ?? 'Registration failed');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Network error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isRegistering = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loginUser() async {
+    if (_phoneController.text.length != 10) {
+      _showSnackBar('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    if (_passwordController.text.isEmpty) {
+      _showSnackBar('Please enter your password');
       return;
     }
 
@@ -162,56 +238,53 @@ class _LoginScreenState extends State<LoginScreen>
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final response = await http.post(
+        Uri.parse('https://ps-back-8dr9.onrender.com/api/user/login'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'phone': _phoneController.text,
+          'password': _passwordController.text,
+        }),
+      );
 
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      _showOtpField = true;
-      _phoneNumber = _phoneController.text;
-    });
+      if (!mounted) return;
 
-    // Auto focus OTP field
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        _otpFocusNode.requestFocus();
+      if (response.statusCode == 200) {
+        // Login successful
+        _showSnackBar('Login successful! Welcome!', isSuccess: true);
+
+        // Navigate to MainScreen and remove all previous routes
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (Route<dynamic> route) => false,
+        );
+      } else {
+        // Login failed
+        final errorData = jsonDecode(response.body);
+        _showSnackBar(errorData['message'] ?? 'Login failed');
       }
-    });
-
-    _showSnackBar('OTP sent to +91 $_phoneNumber', isSuccess: true);
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Network error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.length != 6) {
-      _showSnackBar('Please enter a valid 6-digit OTP');
-      return;
-    }
-
-    if (!mounted) return;
+  void _toggleMode() {
     setState(() {
-      _isOtpVerifying = true;
+      _isLoginMode = !_isLoginMode;
+      // Clear password field when switching modes
+      _passwordController.clear();
     });
-
-    // Simulate OTP verification
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-    setState(() {
-      _isOtpVerifying = false;
-    });
-
-    // Show success message
-    _showSnackBar('Login successful! Welcome!', isSuccess: true);
-
-    // Navigate to MainScreen and remove all previous routes
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-        (Route<dynamic> route) => false,
-      );
-    }
   }
 
   void _showSnackBar(String message, {bool isSuccess = false}) {
@@ -354,7 +427,9 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Column(
                                   children: [
                                     Text(
-                                      "Welcome Back!",
+                                      _isLoginMode
+                                          ? "Welcome Back!"
+                                          : "Create Account",
                                       style: TextStyle(
                                         fontSize: isTablet ? 24 : 20,
                                         fontWeight: FontWeight.w700,
@@ -363,7 +438,9 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      "Sign in to continue your beauty journey",
+                                      _isLoginMode
+                                          ? "Sign in to continue your beauty journey"
+                                          : "Create an account to get started",
                                       style: TextStyle(
                                         fontSize: isTablet ? 16 : 14,
                                         color: const Color(0xFF64748B),
@@ -371,6 +448,52 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                     ),
                                     const SizedBox(height: 32),
+
+                                    // Name Input (only for registration)
+                                    if (!_isLoginMode) ...[
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF8FAFC),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFFE2E8F0),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: TextFormField(
+                                          controller: _nameController,
+                                          focusNode: _nameFocusNode,
+                                          enabled: !_isLoading,
+                                          keyboardType: TextInputType.text,
+                                          style: TextStyle(
+                                            fontSize: isTablet ? 16 : 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF1A1B23),
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: "Full Name",
+                                            hintStyle: TextStyle(
+                                              color: const Color(0xFF94A3B8),
+                                              fontSize: isTablet ? 14 : 13,
+                                            ),
+                                            prefixIcon: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              child: Icon(
+                                                Icons.person_outline,
+                                                size: isTablet ? 20 : 18,
+                                                color: const Color(0xFF94A3B8),
+                                              ),
+                                            ),
+                                            border: InputBorder.none,
+                                            contentPadding:
+                                                const EdgeInsets.all(16),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                    ],
 
                                     // Phone Number Input
                                     Container(
@@ -385,7 +508,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       child: TextFormField(
                                         controller: _phoneController,
                                         focusNode: _phoneFocusNode,
-                                        enabled: !_showOtpField,
+                                        enabled: !_isLoading,
                                         keyboardType: TextInputType.phone,
                                         inputFormatters: [
                                           FilteringTextInputFormatter
@@ -422,54 +545,53 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                     ),
 
-                                    // OTP Input
-                                    if (_showOtpField) ...[
-                                      const SizedBox(height: 16),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          border: Border.all(
-                                            color: const Color(0xFFE2E8F0),
-                                            width: 1,
-                                          ),
+                                    const SizedBox(height: 16),
+
+                                    // Password Input
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(0xFFE2E8F0),
+                                          width: 1,
                                         ),
-                                        child: TextFormField(
-                                          controller: _otpController,
-                                          focusNode: _otpFocusNode,
-                                          keyboardType: TextInputType.number,
-                                          textAlign: TextAlign.center,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                            LengthLimitingTextInputFormatter(6),
-                                          ],
-                                          style: TextStyle(
-                                            fontSize: isTablet ? 18 : 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF1A1B23),
-                                            letterSpacing: 8,
+                                      ),
+                                      child: TextFormField(
+                                        controller: _passwordController,
+                                        focusNode: _passwordFocusNode,
+                                        enabled: !_isLoading,
+                                        obscureText: true,
+                                        style: TextStyle(
+                                          fontSize: isTablet ? 16 : 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF1A1B23),
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: "Password",
+                                          hintStyle: TextStyle(
+                                            color: const Color(0xFF94A3B8),
+                                            fontSize: isTablet ? 14 : 13,
                                           ),
-                                          decoration: InputDecoration(
-                                            hintText: "Enter OTP",
-                                            hintStyle: TextStyle(
+                                          prefixIcon: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Icon(
+                                              Icons.lock_outline,
+                                              size: isTablet ? 20 : 18,
                                               color: const Color(0xFF94A3B8),
-                                              fontSize: isTablet ? 14 : 12,
-                                              letterSpacing: 1,
                                             ),
-                                            border: InputBorder.none,
-                                            contentPadding:
-                                                const EdgeInsets.all(16),
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.all(
+                                            16,
                                           ),
                                         ),
                                       ),
-                                    ],
+                                    ),
 
                                     const SizedBox(height: 24),
 
-                                    // Login Button
+                                    // Login/Register Button
                                     Transform.scale(
                                       scale: _buttonAnimation?.value ?? 1.0,
                                       child: Container(
@@ -499,12 +621,11 @@ class _LoginScreenState extends State<LoginScreen>
                                                   BorderRadius.circular(16),
                                             ),
                                           ),
-                                          onPressed:
-                                              (_isLoading || _isOtpVerifying)
+                                          onPressed: _isLoading
                                               ? null
-                                              : (_showOtpField
-                                                    ? _verifyOtp
-                                                    : _sendOtp),
+                                              : (_isLoginMode
+                                                    ? _loginUser
+                                                    : _registerUser),
                                           child: Ink(
                                             decoration: BoxDecoration(
                                               gradient: LinearGradient(
@@ -521,8 +642,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             ),
                                             child: Container(
                                               alignment: Alignment.center,
-                                              child:
-                                                  _isLoading || _isOtpVerifying
+                                              child: _isLoading
                                                   ? const SizedBox(
                                                       width: 20,
                                                       height: 20,
@@ -535,9 +655,9 @@ class _LoginScreenState extends State<LoginScreen>
                                                       ),
                                                     )
                                                   : Text(
-                                                      _showOtpField
-                                                          ? "Verify OTP"
-                                                          : "Send OTP",
+                                                      _isLoginMode
+                                                          ? "Login"
+                                                          : "Register",
                                                       style: TextStyle(
                                                         fontSize: isTablet
                                                             ? 18
@@ -554,85 +674,21 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                     ),
 
-                                    const SizedBox(height: 24),
+                                    const SizedBox(height: 16),
 
-                                    // Divider
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Divider(
-                                            color: Colors.grey[300],
-                                            thickness: 1,
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                          ),
-                                          child: Text(
-                                            "OR",
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: Divider(
-                                            color: Colors.grey[300],
-                                            thickness: 1,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    const SizedBox(height: 24),
-
-                                    // Google Sign In Button
-                                    Container(
-                                      width: double.infinity,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: const Color(0xFFE2E8F0),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.white,
-                                          foregroundColor: const Color(
-                                            0xFF1A1B23,
-                                          ),
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          // Handle Google sign in
-                                        },
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            const Icon(
-                                              Icons.account_circle,
-                                              color: Color(0xFF93A3EE),
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              "Continue with Google",
-                                              style: TextStyle(
-                                                fontSize: isTablet ? 16 : 14,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
+                                    // Toggle between login and register
+                                    TextButton(
+                                      onPressed: _isLoading
+                                          ? null
+                                          : _toggleMode,
+                                      child: Text(
+                                        _isLoginMode
+                                            ? "Don't have an account? Register"
+                                            : "Already have an account? Login",
+                                        style: TextStyle(
+                                          color: const Color(0xFF93A3EE),
+                                          fontSize: isTablet ? 14 : 12,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ),
@@ -741,6 +797,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Positioned(
       left: screenWidth * positions[index][0],
       top: screenHeight * positions[index][1],
+
       child: Transform.translate(
         offset: Offset(
           math.sin(((_floatingAnimation?.value ?? 0) + delay) * 2 * math.pi) *
